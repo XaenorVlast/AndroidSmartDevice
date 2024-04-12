@@ -2,63 +2,77 @@ package fr.isen.gomez.androidsmartdevice
 
 import android.annotation.SuppressLint
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import fr.isen.gomez.androidsmartdevice.ui.theme.LightBlue
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ScanActivityUI(viewModel: BleViewModel = viewModel()) {
-    val isScanning = viewModel.isScanning.collectAsState()
-    val devicesList = viewModel.devicesList.collectAsState()
-    val errorMessage = viewModel.errorMessage.collectAsState()
+    val isScanning by viewModel.isScanning.collectAsState()
+    val devicesList by viewModel.devicesList.collectAsState()
+    val errorMessage by viewModel.errorMessage.collectAsState()
 
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("Scan BLE") }
+                title = { Text("Scan BLE")
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = LightBlue,
+                    titleContentColor = Color.Black
+                )
+
             )
+
         }
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
+    ) { innerPadding ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding), // Utiliser innerPadding qui est appliqué pour tenir compte de la TopAppBar
+            contentAlignment = Alignment.Center // Centre le contenu à l'intérieur du Box
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
             ) {
                 Image(
-                    painter = painterResource(id = if (isScanning.value) R.drawable.pause else R.drawable.play),
-                    contentDescription = if (isScanning.value) "Arrêter le scan" else "Démarrer le scan",
+                    painter = painterResource(id = if (isScanning) R.drawable.pause else R.drawable.play),
+                    contentDescription = if (isScanning) "Arrêter le scan" else "Démarrer le scan",
                     modifier = Modifier
-                        .size(48.dp)
+                        .size(150.dp)
                         .clickable { viewModel.toggleBleScan() }
                 )
-                Text(if (isScanning.value) "Scanning..." else "Appuyez pour scanner")
-            }
+                Text(if (isScanning) "Scanning..." else "Appuyez pour scanner",
+                    modifier = Modifier.align(Alignment.CenterHorizontally))
 
-            errorMessage.value?.let {
-                Text(it, color = MaterialTheme.colorScheme.error)
-                Spacer(modifier = Modifier.height(8.dp))
-            }
+                errorMessage?.let {
+                    Text(it, color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.align(Alignment.CenterHorizontally))
+                }
 
-            Divider()
-
-            LazyColumn {
-                items(devicesList.value) { device ->
-                    Text(device)
-                    Divider()
+                if (devicesList.isNotEmpty()) {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        items(devicesList) { device ->
+                            Text(device, modifier = Modifier.fillMaxWidth())
+                            Divider()
+                        }
+                    }
                 }
             }
         }
