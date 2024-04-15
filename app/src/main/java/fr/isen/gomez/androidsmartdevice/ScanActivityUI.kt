@@ -11,15 +11,17 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import fr.isen.gomez.androidsmartdevice.ui.theme.LightBlue
 
-@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ScanActivityUI(viewModel: BleViewModel = viewModel()) {
+    val context = LocalContext.current // Get the local context
     val isScanning by viewModel.isScanning.collectAsState()
     val devicesList by viewModel.devicesList.collectAsState()
     val errorMessage by viewModel.errorMessage.collectAsState()
@@ -27,22 +29,19 @@ fun ScanActivityUI(viewModel: BleViewModel = viewModel()) {
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("Scan BLE")
-                },
+                title = { Text("Scan BLE") },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = LightBlue,
                     titleContentColor = Color.Black
                 )
-
             )
-
         }
     ) { innerPadding ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding), // Utiliser innerPadding qui est appliqué pour tenir compte de la TopAppBar
-            contentAlignment = Alignment.Center // Centre le contenu à l'intérieur du Box
+                .padding(innerPadding),
+            contentAlignment = Alignment.Center
         ) {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -53,7 +52,7 @@ fun ScanActivityUI(viewModel: BleViewModel = viewModel()) {
                     contentDescription = if (isScanning) "Arrêter le scan" else "Démarrer le scan",
                     modifier = Modifier
                         .size(150.dp)
-                        .clickable { viewModel.toggleBleScan() }
+                        .clickable { viewModel.toggleBleScan(context) }
                 )
                 Text(if (isScanning) "Scanning..." else "Appuyez pour scanner",
                     modifier = Modifier.align(Alignment.CenterHorizontally))
@@ -69,12 +68,28 @@ fun ScanActivityUI(viewModel: BleViewModel = viewModel()) {
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         items(devicesList) { device ->
-                            Text(device, modifier = Modifier.fillMaxWidth())
-                            Divider()
+                            DeviceItem(device)
                         }
                     }
+                } else {
+                    Text("Aucun appareil détecté",
+                        modifier = Modifier.align(Alignment.CenterHorizontally))
                 }
             }
         }
     }
 }
+
+@Composable
+fun DeviceItem(device: String) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(8.dp),
+        horizontalAlignment = Alignment.Start
+    ) {
+        Text(device, style = MaterialTheme.typography.bodyLarge) // Utilisez bodyLarge ici
+        Divider()
+    }
+}
+
