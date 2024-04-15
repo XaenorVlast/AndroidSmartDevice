@@ -1,6 +1,8 @@
 package fr.isen.gomez.androidsmartdevice
 
 import android.annotation.SuppressLint
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.clickable
@@ -18,6 +20,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import fr.isen.gomez.androidsmartdevice.ui.theme.LightBlue
 
 
+@RequiresApi(Build.VERSION_CODES.S)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ScanActivityUI(viewModel: BleViewModel = viewModel()) {
@@ -52,7 +55,7 @@ fun ScanActivityUI(viewModel: BleViewModel = viewModel()) {
                     contentDescription = if (isScanning) "Arrêter le scan" else "Démarrer le scan",
                     modifier = Modifier
                         .size(150.dp)
-                        .clickable { viewModel.toggleBleScan(context) }
+                        .clickable { viewModel.toggleBleScan() }
                 )
                 Text(if (isScanning) "Scanning..." else "Appuyez pour scanner",
                     modifier = Modifier.align(Alignment.CenterHorizontally))

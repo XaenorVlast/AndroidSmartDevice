@@ -1,23 +1,18 @@
 package fr.isen.gomez.androidsmartdevice
 
+import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothManager
 import android.bluetooth.le.BluetoothLeScanner
 import android.bluetooth.le.ScanCallback
 import android.bluetooth.le.ScanResult
 import android.content.Context
-import android.content.pm.PackageManager
 import android.os.Handler
 import android.os.Looper
 import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import android.util.Log
-import androidx.core.content.ContextCompat
-import android.Manifest
-import android.os.Build
-import androidx.annotation.RequiresApi
-import kotlinx.coroutines.*
 
 class BleViewModel : ViewModel() {
     private val _isScanning = MutableStateFlow(false)
@@ -37,9 +32,6 @@ class BleViewModel : ViewModel() {
     fun updatePermissions(granted: Boolean) {
         Log.d("BleViewModel", "updatePermissions: Permissions granted = $granted")
         _errorMessage.value = if (!granted) "Necessary permissions not granted." else null
-        if (granted) {
-            _isScanning.value = false // Reset scanning state
-        }
     }
 
     fun initBle(context: Context) {
@@ -54,50 +46,31 @@ class BleViewModel : ViewModel() {
         Log.d("BleViewModel", "BLE is initialized and ready to scan.")
     }
 
-    @RequiresApi(Build.VERSION_CODES.S)
-    fun toggleBleScan(context: Context) {
+    fun toggleBleScan() {
         if (_isScanning.value) {
-            stopBleScan(context)
+            stopBleScan()
         } else {
-            startBleScan(context)
+            startBleScan()
         }
     }
 
-    @RequiresApi(Build.VERSION_CODES.S)
-    private fun startBleScan(context: Context) {
-        // Assurez-vous que toutes les permissions nécessaires, y compris la permission de localisation en arrière-plan, sont accordées
-        val permissionsGranted = ContextCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_SCAN) == PackageManager.PERMISSION_GRANTED &&
-                ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED &&
-                ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_BACKGROUND_LOCATION) == PackageManager.PERMISSION_GRANTED
-
-        if (permissionsGranted) {
-            bluetoothLeScanner?.let { scanner ->
-                _isScanning.value = true
-                scanner.startScan(scanCallback)
-                handler.postDelayed({
-                    if (_isScanning.value) stopBleScan(context)
-                }, SCAN_PERIOD)
-                Log.d("BleViewModel", "Scanning started.")
-            } ?: run {
-                Log.d("BleViewModel", "startBleScan: Error initializing BLE scanner.")
-                _errorMessage.value = "Error initializing BLE scanner."
-            }
-        } else {
-            Log.d("BleViewModel", "startBleScan: Necessary permissions not granted.")
-            _errorMessage.value = "Necessary permissions not granted."
+    @SuppressLint("MissingPermission")
+    private fun startBleScan() {
+        bluetoothLeScanner?.let { scanner ->
+            _isScanning.value = true
+            scanner.startScan(scanCallback)
+            handler.postDelayed({
+                if (_isScanning.value) stopBleScan()
+            }, SCAN_PERIOD)
+            Log.d("BleViewModel", "Scanning started.")
         }
     }
 
-
-    private fun stopBleScan(context: Context) {
-        if (ContextCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_SCAN) == PackageManager.PERMISSION_GRANTED) {
-            bluetoothLeScanner?.stopScan(scanCallback)
-            _isScanning.value = false
-            Log.d("BleViewModel", "Scanning stopped.")
-        } else {
-            Log.d("BleViewModel", "stopBleScan: BLUETOOTH_SCAN permission not granted.")
-            _errorMessage.value = "BLUETOOTH_SCAN permission not granted."
-        }
+    @SuppressLint("MissingPermission")
+    private fun stopBleScan() {
+        bluetoothLeScanner?.stopScan(scanCallback)
+        _isScanning.value = false
+        Log.d("BleViewModel", "Scanning stopped.")
     }
 
     private val scanCallback = object : ScanCallback() {
@@ -115,5 +88,4 @@ class BleViewModel : ViewModel() {
             Log.d("BleViewModel", "Scan failed with error: $errorCode")
         }
     }
-
 }
