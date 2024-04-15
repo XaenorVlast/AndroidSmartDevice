@@ -18,8 +18,11 @@ class BleViewModel : ViewModel() {
     private val _isScanning = MutableStateFlow(false)
     val isScanning: StateFlow<Boolean> = _isScanning
 
-    private val _devicesList = MutableStateFlow<List<String>>(emptyList())
-    val devicesList: StateFlow<List<String>> = _devicesList
+    data class BluetoothDeviceInfo(val name: String?, val address: String)
+
+    // Liste mutable pour stocker les informations des appareils détectés
+    private val _devicesList = MutableStateFlow<List<BluetoothDeviceInfo>>(emptyList())
+    val devicesList: StateFlow<List<BluetoothDeviceInfo>> = _devicesList
 
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage: StateFlow<String?> = _errorMessage
@@ -74,12 +77,17 @@ class BleViewModel : ViewModel() {
     }
 
     private val scanCallback = object : ScanCallback() {
+        @SuppressLint("MissingPermission")
         override fun onScanResult(callbackType: Int, result: ScanResult) {
-            Log.d("BleViewModel", "Scan result received: ${result.device.address}")
+            val deviceName = result.device.name ?: "Unknown Device"
             val deviceAddress = result.device.address
-            if (!_devicesList.value.contains(deviceAddress)) {
+            val deviceInfo = BluetoothDeviceInfo(deviceName, deviceAddress)
+
+            Log.d("BleViewModel", "Scan result received: Name: $deviceName, Address: $deviceAddress")
+
+            if (!_devicesList.value.any { it.address == deviceAddress }) {
                 val updatedList = _devicesList.value.toMutableList()
-                updatedList.add(deviceAddress)
+                updatedList.add(deviceInfo)
                 _devicesList.value = updatedList
             }
         }

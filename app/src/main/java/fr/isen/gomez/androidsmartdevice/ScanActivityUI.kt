@@ -84,14 +84,17 @@ fun ScanActivityUI(viewModel: BleViewModel = viewModel()) {
 }
 
 @Composable
-fun DeviceItem(device: String) {
+fun DeviceItem(device: BleViewModel.BluetoothDeviceInfo) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .padding(8.dp),
         horizontalAlignment = Alignment.Start
     ) {
-        Text(device, style = MaterialTheme.typography.bodyLarge) // Utilisez bodyLarge ici
+        // Affiche le nom de l'appareil ou "Unknown Device" si le nom est null
+        Text(device.name ?: "Unknown Device", style = MaterialTheme.typography.bodyLarge)
+        // Affiche l'adresse de l'appareil
+        Text(device.address, style = MaterialTheme.typography.bodySmall)
         Divider()
     }
 }
