@@ -1,6 +1,8 @@
 package fr.isen.gomez.androidsmartdevice
 
 import android.annotation.SuppressLint
+import android.content.Context
+import android.content.Intent
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
@@ -71,7 +73,7 @@ fun ScanActivityUI(viewModel: BleViewModel = viewModel()) {
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         items(devicesList) { device ->
-                            DeviceItem(device)
+                            DeviceItem(viewModel, context, device) // Corrected parameter order
                         }
                     }
                 } else {
@@ -83,19 +85,45 @@ fun ScanActivityUI(viewModel: BleViewModel = viewModel()) {
     }
 }
 
+enum class ConnectionState {
+    Disconnected, Connecting, Connected, Failed
+}
+
 @Composable
-fun DeviceItem(device: BleViewModel.BluetoothDeviceInfo) {
+fun DeviceItem(viewModel: BleViewModel, context: Context, device: BleViewModel.BluetoothDeviceInfo) {
+    var connectionState by remember { mutableStateOf(ConnectionState.Disconnected) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+
+    LaunchedEffect(connectionState) {
+        if (connectionState == ConnectionState.Connecting) {
+            viewModel.connectToDevice(context, device.address) { success, error ->
+                if (success) {
+                    connectionState = ConnectionState.Connected
+                    context.startActivity(Intent(context, ConnectedActivity::class.java))  // Navigate when connected
+                } else {
+                    errorMessage = error
+                    connectionState = ConnectionState.Failed
+                }
+            }
+        }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
+            .clickable(enabled = connectionState == ConnectionState.Disconnected) { connectionState = ConnectionState.Connecting }
             .padding(8.dp),
         horizontalAlignment = Alignment.Start
     ) {
-        // Affiche le nom de l'appareil ou "Unknown Device" si le nom est null
         Text(device.name ?: "Unknown Device", style = MaterialTheme.typography.bodyLarge)
-        // Affiche l'adresse de l'appareil
         Text(device.address, style = MaterialTheme.typography.bodySmall)
+        when (connectionState) {
+            ConnectionState.Connecting -> CircularProgressIndicator()
+            ConnectionState.Failed -> Text("Failed: $errorMessage", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.error)
+            else -> {}
+        }
         Divider()
     }
 }
+
 

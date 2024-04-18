@@ -2,7 +2,11 @@ package fr.isen.gomez.androidsmartdevice
 
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter
+import android.bluetooth.BluetoothDevice
+import android.bluetooth.BluetoothGatt
+import android.bluetooth.BluetoothGattCallback
 import android.bluetooth.BluetoothManager
+import android.bluetooth.BluetoothProfile
 import android.bluetooth.le.BluetoothLeScanner
 import android.bluetooth.le.ScanCallback
 import android.bluetooth.le.ScanResult
@@ -96,4 +100,35 @@ class BleViewModel : ViewModel() {
             Log.d("BleViewModel", "Scan failed with error: $errorCode")
         }
     }
+    @SuppressLint("MissingPermission")
+    fun connectToDevice(context: Context, deviceAddress: String, onConnected: (Boolean, String?) -> Unit) {
+        Log.d("BleViewModel", "Attempting to connect to device at address: $deviceAddress")
+
+        val device: BluetoothDevice? = bluetoothAdapter?.getRemoteDevice(deviceAddress)
+        if (device == null) {
+            Log.d("BleViewModel", "No device found with address: $deviceAddress")
+            onConnected(false, "Device not found.")
+            return
+        }
+
+        device.connectGatt(context, false, object : BluetoothGattCallback() {
+            override fun onConnectionStateChange(gatt: BluetoothGatt?, status: Int, newState: Int) {
+                super.onConnectionStateChange(gatt, status, newState)
+                Log.d("BleViewModel", "Connection state changed: newState=$newState, status=$status")
+
+                if (newState == BluetoothProfile.STATE_CONNECTED) {
+                    Log.d("BleViewModel", "Connected to GATT server. Address: $deviceAddress")
+                    onConnected(true, null)
+                } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
+                    Log.d("BleViewModel", "Disconnected from GATT server. Address: $deviceAddress")
+                    onConnected(false, "Disconnected unexpectedly.")
+                }
+            }
+        })
+    }
+
+
+
+
+
 }
