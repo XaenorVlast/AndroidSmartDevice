@@ -4,6 +4,7 @@
     import androidx.activity.ComponentActivity
     import androidx.activity.compose.setContent
     import android.content.Intent
+    import fr.isen.gomez.androidsmartdevice.vue.MainActivityUI
 
 
     class MainActivity : ComponentActivity() {

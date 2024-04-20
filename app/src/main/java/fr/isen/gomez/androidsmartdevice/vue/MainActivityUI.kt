@@ -1,4 +1,4 @@
-package fr.isen.gomez.androidsmartdevice
+package fr.isen.gomez.androidsmartdevice.vue
 
 import android.annotation.SuppressLint
 
@@ -22,6 +22,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import fr.isen.gomez.androidsmartdevice.R
 import fr.isen.gomez.androidsmartdevice.ui.theme.LightBlue
 
 @OptIn(ExperimentalMaterial3Api::class)

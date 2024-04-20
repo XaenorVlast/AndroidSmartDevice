@@ -1,6 +1,5 @@
-package fr.isen.gomez.androidsmartdevice
+package fr.isen.gomez.androidsmartdevice.vue
 
-import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.os.Build
@@ -19,6 +18,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import fr.isen.gomez.androidsmartdevice.moteur.BleViewModel
+import fr.isen.gomez.androidsmartdevice.ConnectedActivity
+import fr.isen.gomez.androidsmartdevice.R
 import fr.isen.gomez.androidsmartdevice.ui.theme.LightBlue
 
 
@@ -111,7 +113,9 @@ fun DeviceItem(viewModel: BleViewModel, context: Context, device: BleViewModel.B
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(enabled = connectionState == ConnectionState.Disconnected) { connectionState = ConnectionState.Connecting }
+            .clickable(enabled = connectionState == ConnectionState.Disconnected) { connectionState =
+                ConnectionState.Connecting
+            }
             .padding(8.dp),
         horizontalAlignment = Alignment.Start
     ) {
