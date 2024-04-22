@@ -34,6 +34,12 @@ fun ConnectedActivityUI(viewModel: BleViewModel) {
 
 @Composable
 fun LedControlSwitch(label: String, isOn: Boolean, onToggle: (Boolean) -> Unit) {
+    var isChecked by remember { mutableStateOf(isOn) }
+
+    LaunchedEffect(isOn) {
+        isChecked = isOn
+    }
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -43,8 +49,11 @@ fun LedControlSwitch(label: String, isOn: Boolean, onToggle: (Boolean) -> Unit) 
     ) {
         Text(text = label)
         Switch(
-            checked = isOn,
-            onCheckedChange = { isChecked -> onToggle(isChecked) }
+            checked = isChecked,
+            onCheckedChange = {
+                isChecked = it
+                onToggle(it)
+            }
         )
     }
 }
