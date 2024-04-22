@@ -7,20 +7,18 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.ViewModelProvider
 import fr.isen.gomez.androidsmartdevice.moteur.BleViewModel
+import fr.isen.gomez.androidsmartdevice.moteur.BleViewModelFactory
 import fr.isen.gomez.androidsmartdevice.moteur.BluetoothServiceManager
 import fr.isen.gomez.androidsmartdevice.moteur.PermissionsHelper
-
 import fr.isen.gomez.androidsmartdevice.vue.ScanActivityUI
-
 
 class ScanActivity : ComponentActivity() {
 
     private lateinit var bleViewModel: BleViewModel
     private lateinit var permissionsHelper: PermissionsHelper
 
-    // Le lanceur de demande de permissions reste inchangé
     private val requestPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
             handlePermissionsResult(permissions)
@@ -30,24 +28,25 @@ class ScanActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Initialisation des instances nécessaires
-        permissionsHelper = PermissionsHelper(this)  // Assurez-vous que ceci est fait en premier
-        val bluetoothManager = BluetoothServiceManager(this)
-        bleViewModel = BleViewModel(bluetoothManager)
+        permissionsHelper = PermissionsHelper(this)
+        // Utilisation de l'instance singleton de BluetoothServiceManager
+        val bluetoothManager = BluetoothServiceManager.getInstance(this)
+
+        // Créer BleViewModel en utilisant BleViewModelFactory
+        val viewModelFactory = BleViewModelFactory(bluetoothManager)
+        bleViewModel = ViewModelProvider(this, viewModelFactory).get(BleViewModel::class.java)
 
         setContent {
             ScanActivityUI(bleViewModel)
         }
 
-        checkPermissionsAndInitialize()  // Cette fonction dépend de permissionsHelper, donc doit être appelée après son initialisation
+        checkPermissionsAndInitialize()
     }
 
     private fun handlePermissionsResult(permissions: Map<String, Boolean>) {
         val allPermissionsGranted = permissions.entries.all { it.value }
         bleViewModel.updatePermissions(allPermissionsGranted)
-        if (allPermissionsGranted) {
-            bleViewModel.initBle()
-        } else {
+        if (!allPermissionsGranted) {
             Toast.makeText(this, "Permission denied. Unable to perform Bluetooth operations.", Toast.LENGTH_LONG).show()
         }
     }
@@ -61,7 +60,6 @@ class ScanActivity : ComponentActivity() {
     private fun checkPermissionsAndInitialize() {
         if (permissionsHelper.hasAllPermissions()) {
             bleViewModel.updatePermissions(true)
-            bleViewModel.initBle()
         } else {
             permissionsHelper.requestNeededPermissions(requestPermissionLauncher)
         }

@@ -1,30 +1,27 @@
 package fr.isen.gomez.androidsmartdevice.moteur
 
 import android.content.Context
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 
 class BleViewModel(private val bluetoothManager: BluetoothServiceManager) : ViewModel() {
 
-    // Ces StateFlows sont exposés en tant que valeurs immuables à l'extérieur de la classe
     val isScanning: StateFlow<Boolean> = bluetoothManager.isScanning
     val devicesList: StateFlow<List<BluetoothDeviceInfo>> = bluetoothManager.devicesList
     val errorMessage: MutableStateFlow<String?> = bluetoothManager.errorMessage
 
-    // Met à jour le message d'erreur en cas de permissions non accordées
+    private val _ledState = MutableLiveData<BooleanArray>()
+    val ledState: LiveData<BooleanArray> = _ledState
+
     fun updatePermissions(granted: Boolean) {
         if (!granted) {
             errorMessage.value = "Necessary permissions not granted."
         }
     }
 
-    // Initialise le Bluetooth via le BluetoothServiceManager
-    fun initBle() {
-        bluetoothManager.initBle()
-    }
-
-    // Bascule l'état du scan Bluetooth
     fun toggleBleScan() {
         if (isScanning.value) {
             bluetoothManager.stopBleScan()
@@ -33,11 +30,19 @@ class BleViewModel(private val bluetoothManager: BluetoothServiceManager) : View
         }
     }
 
-    // Tente de se connecter à un appareil Bluetooth
     fun connectToDevice(context: Context, deviceAddress: String, onConnected: (Boolean, String?) -> Unit) {
-        bluetoothManager.connectToDevice(context, deviceAddress, onConnected)
+        bluetoothManager.connectToDevice(context.applicationContext, deviceAddress, onConnected)
     }
 
-    // Classe de données pour les informations sur les appareils Bluetooth
     data class BluetoothDeviceInfo(val name: String?, val address: String)
+
+    fun toggleLed(ledIndex: Int, isOn: Boolean) {
+        bluetoothManager.writeLedCharacteristic(ledIndex + 1, isOn)
+
+        _ledState.value = _ledState.value?.also {
+            it[ledIndex] = isOn
+        } ?: BooleanArray(3) { i -> i == ledIndex && isOn }
+    }
+
+
 }
